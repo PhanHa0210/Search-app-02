@@ -9,53 +9,86 @@ export function removeVietnameseTones(str: string): string {
     .replace(/Đ/g, "D")
 }
 
-// Tách từ khóa thành mảng từ
+// Tách từ khóa thành mảng từ - cải thiện để xử lý số và ký tự đặc biệt
 export function tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    .trim()
-    .split(/\s+/)
-    .filter((word) => word.length > 0)
+  return (
+    text
+      .toLowerCase()
+      .trim()
+      // Tách theo dấu cách, dấu phẩy, dấu chấm, dấu hai chấm, dấu chấm phẩy
+      .split(/[\s,.:;]+/)
+      .filter((word) => word.length > 0)
+  )
 }
 
-// Tính tỷ lệ khớp giữa query và text
+// Tách từ khóa đặc biệt cho số và mã
+export function tokenizeSpecial(text: string): string[] {
+  const normalTokens = tokenize(text)
+  const specialTokens: string[] = []
+
+  // Tìm các pattern đặc biệt như số, mã văn bản
+  const specialPatterns = text.match(/\b\d+\/\d+\/[A-Z-]+\b|\b[A-Z]+-[A-Z]+\b|\b\d+\b/gi) || []
+
+  return [...normalTokens, ...specialPatterns.map((token) => token.toLowerCase())]
+}
+
+// Tính tỷ lệ khớp giữa query và text - cải thiện cho từ ngắn và đặc biệt
 function calculateMatchRatio(text: string, query: string): number {
   const normalizedText = removeVietnameseTones(text.toLowerCase())
   const normalizedQuery = removeVietnameseTones(query.toLowerCase())
 
-  const queryWords = tokenize(normalizedQuery)
-  const textWords = tokenize(normalizedText)
+  const queryWords = tokenizeSpecial(normalizedQuery)
+  const textWords = tokenizeSpecial(normalizedText)
 
   if (queryWords.length === 0) return 0
 
   let matchedWords = 0
-  const sequentialMatches = 0
   let maxSequentialMatches = 0
 
-  // Đếm số từ khớp và chuỗi khớp liên tiếp dài nhất
-  for (let i = 0; i < queryWords.length; i++) {
-    const queryWord = queryWords[i]
+  // Kiểm tra exact substring match cho các từ đặc biệt
+  for (const queryWord of queryWords) {
     let wordFound = false
 
-    // Tìm từ trong text
-    for (let j = 0; j < textWords.length; j++) {
-      if (textWords[j] === queryWord) {
+    // Exact match
+    for (const textWord of textWords) {
+      if (textWord === queryWord) {
         matchedWords++
         wordFound = true
-
-        // Kiểm tra chuỗi liên tiếp
-        let tempSequential = 1
-        for (let k = 1; k < queryWords.length - i && j + k < textWords.length; k++) {
-          if (queryWords[i + k] === textWords[j + k]) {
-            tempSequential++
-          } else {
-            break
-          }
-        }
-        maxSequentialMatches = Math.max(maxSequentialMatches, tempSequential)
         break
       }
     }
+
+    // Substring match cho từ ngắn hoặc số
+    if (!wordFound && (queryWord.length <= 3 || /^\d+$/.test(queryWord))) {
+      if (normalizedText.includes(queryWord)) {
+        matchedWords++
+        wordFound = true
+      }
+    }
+
+    // Partial match cho từ dài
+    if (!wordFound && queryWord.length > 3) {
+      for (const textWord of textWords) {
+        if (textWord.includes(queryWord) || queryWord.includes(textWord)) {
+          matchedWords += 0.7 // Partial match có điểm thấp hơn
+          wordFound = true
+          break
+        }
+      }
+    }
+  }
+
+  // Tính chuỗi liên tiếp dài nhất
+  for (let i = 0; i <= textWords.length - queryWords.length; i++) {
+    let tempSequential = 0
+    for (let j = 0; j < queryWords.length; j++) {
+      if (i + j < textWords.length && textWords[i + j] === queryWords[j]) {
+        tempSequential++
+      } else {
+        break
+      }
+    }
+    maxSequentialMatches = Math.max(maxSequentialMatches, tempSequential)
   }
 
   // Tính tỷ lệ khớp cơ bản
@@ -73,12 +106,25 @@ function calculateMatchRatio(text: string, query: string): number {
   return Math.min(totalRatio, 1.0) // Giới hạn tối đa 100%
 }
 
-// Cập nhật hàm tính điểm tương đồng dựa trên tỷ lệ khớp
+// Cập nhật hàm tính điểm tương đồng - giảm ngưỡng cho từ ngắn
 export function calculateRelevanceScore(text: string, query: string): number {
   const matchRatio = calculateMatchRatio(text, query)
+  const queryWords = tokenizeSpecial(query.toLowerCase())
 
-  // Chỉ trả về điểm nếu tỷ lệ khớp >= 70%
-  if (matchRatio < 0.7) {
+  // Ngưỡng linh hoạt dựa trên loại từ khóa
+  let threshold = 0.7 // Mặc định 70%
+
+  // Giảm ngưỡng cho từ ngắn, số, hoặc mã đặc biệt
+  const hasShortWords = queryWords.some((word) => word.length <= 3)
+  const hasNumbers = queryWords.some((word) => /\d/.test(word))
+  const hasSpecialCodes = queryWords.some((word) => /[A-Z]+-[A-Z]+/i.test(word))
+
+  if (hasShortWords || hasNumbers || hasSpecialCodes) {
+    threshold = 0.5 // Giảm xuống 50%
+  }
+
+  // Chỉ trả về điểm nếu tỷ lệ khớp >= ngưỡng
+  if (matchRatio < threshold) {
     return 0
   }
 
@@ -119,34 +165,26 @@ function isSubsequence(query: string, text: string): boolean {
   return queryIndex === query.length
 }
 
-// Cập nhật hàm highlight để không highlight dấu cách
+// Cập nhật hàm highlight để xử lý tốt hơn các từ đặc biệt
 export function highlightMatches(text: string, query: string): string {
   if (!query.trim()) return text
 
   const normalizedQuery = removeVietnameseTones(query.toLowerCase())
-  const queryWords = tokenize(normalizedQuery)
+  const queryWords = tokenizeSpecial(normalizedQuery)
 
   let highlightedText = text
 
-  // Highlight từng từ riêng biệt (không highlight dấu cách)
+  // Highlight từng từ riêng biệt
   for (const word of queryWords) {
-    if (word.length > 1) {
-      // Tạo regex để match từ hoàn chỉnh, không bao gồm dấu cách
-      const normalizedWord = removeVietnameseTones(word)
-      const regex = new RegExp(`\\b(${escapeRegExp(normalizedWord)})\\b`, "gi")
+    if (word.length > 0) {
+      // Escape special characters for regex
+      const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
-      // Tìm và highlight từ trong text gốc
-      highlightedText = highlightedText.replace(regex, (match) => {
-        return `<mark class="bg-yellow-200 px-1 rounded">${match}</mark>`
-      })
+      // Tạo regex để match từ
+      const regex = new RegExp(`(${escapedWord})`, "gi")
 
-      // Nếu không tìm thấy word boundary, thử tìm substring
-      if (!highlightedText.includes("<mark")) {
-        const substringRegex = new RegExp(`(${escapeRegExp(normalizedWord)})`, "gi")
-        highlightedText = highlightedText.replace(substringRegex, (match) => {
-          return `<mark class="bg-yellow-200 px-1 rounded">${match}</mark>`
-        })
-      }
+      // Highlight từ trong text
+      highlightedText = highlightedText.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>')
     }
   }
 
