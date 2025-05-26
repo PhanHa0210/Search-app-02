@@ -51,7 +51,7 @@ export default function AnswerLookup() {
       }
     })
 
-    // Filter and sort by relevance - chỉ lấy kết quả có điểm > 0 (tỷ lệ khớp >= 70%)
+    // Filter and sort by relevance - chỉ lấy kết quả có điểm > 0
     return scoredResults
       .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
@@ -91,7 +91,7 @@ export default function AnswerLookup() {
           <CardContent className="space-y-4">
             <Input
               type="text"
-              placeholder="Nhập từ khóa để tìm kiếm (chỉ hiển thị kết quả khớp cao)..."
+              placeholder="Nhập từ khóa để tìm kiếm (hỗ trợ số, mã văn bản)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="text-lg p-4 h-12"
@@ -101,7 +101,7 @@ export default function AnswerLookup() {
             {searchTerm.trim() && (
               <div className="flex items-center gap-2 text-blue-600 bg-blue-50 p-3 rounded">
                 <Target className="w-4 h-4" />
-                <span className="text-sm">Chỉ hiển thị kết quả có tỷ lệ khớp ≥ 70%</span>
+                <span className="text-sm">Hỗ trợ tìm kiếm số, mã văn bản (VD: 31, TT-BYT, 31/2021)</span>
               </div>
             )}
           </CardContent>
@@ -127,10 +127,10 @@ export default function AnswerLookup() {
                   <div className="text-sm text-gray-400">
                     <p>Để tìm được kết quả:</p>
                     <ul className="list-disc list-inside space-y-1">
+                      <li>Thử tìm kiếm với số: "31", "2021"</li>
+                      <li>Thử tìm kiếm với mã: "TT-BYT", "31/2021"</li>
                       <li>Sử dụng từ khóa chính xác hơn</li>
-                      <li>Thử từ khóa ngắn gọn hơn</li>
                       <li>Kiểm tra chính tả</li>
-                      <li>Thử các từ đồng nghĩa</li>
                     </ul>
                   </div>
                 </div>
