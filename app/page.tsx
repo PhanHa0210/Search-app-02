@@ -153,7 +153,7 @@ export default function AnswerLookup() {
                         <HighlightedText
                           text={item.question}
                           query={searchTerm}
-                          className="font-medium text-gray-900 leading-relaxed"
+                          className="font-bold text-gray-900 leading-relaxed text-lg"
                         />
                       </div>
                       <div className="bg-green-50 border-l-4 border-green-400 p-3 rounded">
@@ -197,7 +197,7 @@ export default function AnswerLookup() {
                               <Badge variant="outline" className="mb-2">
                                 Câu {item.id}
                               </Badge>
-                              <p className="font-medium text-gray-900 leading-relaxed">{item.question}</p>
+                              <p className="font-bold text-gray-900 leading-relaxed text-lg">{item.question}</p>
                             </div>
                             <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
                               <p className="text-blue-800 font-medium">{item.answer}</p>
