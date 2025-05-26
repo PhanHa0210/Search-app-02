@@ -1,0 +1,24 @@
+{
+  "P1": [
+    {
+      "id": 1,
+      "question": "Trong việc phân cấp chăm sóc người bệnh, điều dưỡng cần phải lưu ý điều gì khi phân chia các bệnh nhân?",
+      "answer": "Đáp án C: Phân cấp chăm sóc dựa trên tình trạng sức khỏe và mức độ nghiêm trọng của bệnh"
+    },
+    {
+      "id": 2,
+      "question": "Điều dưỡng có được phép xác định chẩn đoán điều dưỡng không?",
+      "answer": "Đáp án B: Có, và ưu tiên các chẩn đoán tác động trực tiếp đến tình trạng"
+    }
+  ],
+  "P2": [
+    {
+      "id": 3,
+      "question": "Câu hỏi P2 mẫu...",
+      "answer": "Đáp án mẫu..."
+    }
+  ],
+  "P3": [],
+  "P4": [],
+  "P5": []
+}
