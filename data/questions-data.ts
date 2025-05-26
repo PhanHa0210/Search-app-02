@@ -436,12 +436,6 @@ export const questionsData: QuestionsData = {
   },
 
   {
-    id: 70,
-    question: 'Mạch nghịch lý (thay đổi theo nhịp thở) thường gặp trong:',
-    answer: 'Đáp án A: Hen phế quản nặng',
-  },
-
-  {
     id: 71,
     question: 'Người bệnh có huyết áp 80/50 mmHg, mạch 130 lần/phút cần được:',
     answer: 'Đáp án C: Báo cáo ngay lập tức cho bác sĩ điều trị để có chỉ định can thiệp kịp thời',
